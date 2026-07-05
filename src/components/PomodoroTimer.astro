@@ -471,10 +471,26 @@ export interface Props {
       e.preventDefault();
       inputSeconds.focus();
       inputSeconds.select();
+      return;
     }
     if (e.key === "Enter") {
       e.preventDefault();
       exitEditMode();
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      let val = parseInt(inputMinutes.value, 10) || 0;
+      val = Math.min(999, val + 1);
+      inputMinutes.value = String(val).padStart(2, "0");
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      let val = parseInt(inputMinutes.value, 10) || 0;
+      val = Math.max(0, val - 1);
+      inputMinutes.value = String(val).padStart(2, "0");
+      return;
     }
   });
 
@@ -488,10 +504,40 @@ export interface Props {
     if (e.key === "ArrowLeft" && inputSeconds.selectionStart === 0) {
       e.preventDefault();
       inputMinutes.focus();
+      return;
     }
     if (e.key === "Enter") {
       e.preventDefault();
       exitEditMode();
+      return;
+    }
+    if (e.key === "ArrowUp") {
+      e.preventDefault();
+      let mins = parseInt(inputMinutes.value, 10) || 0;
+      let secs = parseInt(inputSeconds.value, 10) || 0;
+      if (secs >= 59) {
+        secs = 0;
+        mins = Math.min(999, mins + 1);
+      } else {
+        secs += 1;
+      }
+      inputMinutes.value = String(mins).padStart(2, "0");
+      inputSeconds.value = String(secs).padStart(2, "0");
+      return;
+    }
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      let mins = parseInt(inputMinutes.value, 10) || 0;
+      let secs = parseInt(inputSeconds.value, 10) || 0;
+      if (secs <= 0) {
+        secs = 59;
+        mins = Math.max(0, mins - 1);
+      } else {
+        secs -= 1;
+      }
+      inputMinutes.value = String(mins).padStart(2, "0");
+      inputSeconds.value = String(secs).padStart(2, "0");
+      return;
     }
   });
 
