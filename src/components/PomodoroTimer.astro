@@ -263,6 +263,26 @@ export interface Props {
     mainBtn.setAttribute("aria-label", "Start timer");
   }
 
+  function playSound() {
+    const ctx = new AudioContext();
+    const now = ctx.currentTime;
+
+    // Pleasant three-note chime: C5 → E5 → G5
+    const notes = [523.25, 659.25, 783.99];
+    notes.forEach((freq, i) => {
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = freq;
+      gain.gain.setValueAtTime(0.3, now + i * 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + i * 0.15 + 0.4);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(now + i * 0.15);
+      osc.stop(now + i * 0.15 + 0.4);
+    });
+  }
+
   function startTimer() {
     if (remainingSeconds <= 0) return;
     isRunning = true;
@@ -277,6 +297,7 @@ export interface Props {
 
       if (remainingSeconds <= 0) {
         stopTimer();
+        playSound();
         ringProgress.style.strokeDashoffset = String(CIRCUMFERENCE);
         // Brief flash
         timerContainer.style.filter = "brightness(1.1)";
