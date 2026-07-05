@@ -20,10 +20,35 @@ export interface Props {
       data-remaining-seconds="1500"
     />
   </svg>
-  <div class="timer-display">
-    <span class="timer-minutes">25</span>
-    <span class="timer-colon">:</span>
-    <span class="timer-seconds">00</span>
+  <div class="timer-display" id="timerDisplay">
+    <!-- Read-only spans -->
+    <span class="timer-readonly" id="timerReadonly">
+      <span class="timer-minutes" id="timerMinutes">25</span>
+      <span class="timer-colon">:</span>
+      <span class="timer-seconds" id="timerSeconds">00</span>
+    </span>
+    <!-- Editable inputs (hidden by default) -->
+    <span class="timer-edit" id="timerEdit" style="display:none">
+      <input
+        class="timer-input"
+        id="inputMinutes"
+        type="text"
+        inputmode="numeric"
+        maxlength="3"
+        value="25"
+        autocomplete="off"
+      />
+      <span class="timer-colon-edit">:</span>
+      <input
+        class="timer-input"
+        id="inputSeconds"
+        type="text"
+        inputmode="numeric"
+        maxlength="2"
+        value="00"
+        autocomplete="off"
+      />
+    </span>
   </div>
 </div>
 
@@ -36,6 +61,9 @@ export interface Props {
   </button>
   <button class="session-btn" data-type="long-break" data-duration="900">
     Long Break
+  </button>
+  <button class="session-btn" data-type="custom" data-duration="0">
+    Custom
   </button>
 </div>
 
@@ -93,6 +121,15 @@ export interface Props {
     align-items: center;
     justify-content: center;
     gap: 2px;
+    cursor: pointer;
+  }
+
+  .timer-readonly,
+  .timer-edit {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
   }
 
   .timer-minutes,
@@ -109,6 +146,47 @@ export interface Props {
     font-weight: 600;
     color: var(--color-text-muted);
     margin-top: -4px;
+  }
+
+  /* Editable inputs */
+  .timer-input {
+    font-family: inherit;
+    font-size: 4.5rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: -0.02em;
+    color: var(--color-text);
+    background: transparent;
+    border: none;
+    outline: none;
+    text-align: center;
+    width: 3ch;
+    padding: 0;
+    caret-color: var(--color-accent);
+    border-radius: 4px;
+    transition: background var(--transition);
+  }
+
+  .timer-input:focus {
+    background: var(--color-btn-hover);
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+  }
+
+  #inputMinutes {
+    width: 3.5ch;
+  }
+
+  #inputSeconds {
+    width: 2.5ch;
+  }
+
+  .timer-colon-edit {
+    font-size: 4rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    margin-top: -4px;
+    pointer-events: none;
   }
 
   /* Session Controls */
@@ -204,6 +282,11 @@ export interface Props {
     animation: pulse-text 2s ease-in-out infinite;
   }
 
+  /* Hide cursor when running */
+  .timer-container.running .timer-display {
+    cursor: default;
+  }
+
   @keyframes pulse-text {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.85; }
@@ -215,8 +298,13 @@ export interface Props {
   const CIRCUMFERENCE = 2 * Math.PI * 88; // ~552.92
 
   const ringProgress = document.querySelector(".ring-progress") as SVGCircleElement;
-  const minutesEl = document.querySelector(".timer-minutes") as HTMLSpanElement;
-  const secondsEl = document.querySelector(".timer-seconds") as HTMLSpanElement;
+  const minutesEl = document.getElementById("timerMinutes") as HTMLSpanElement;
+  const secondsEl = document.getElementById("timerSeconds") as HTMLSpanElement;
+  const timerReadonly = document.getElementById("timerReadonly") as HTMLSpanElement;
+  const timerEdit = document.getElementById("timerEdit") as HTMLSpanElement;
+  const inputMinutes = document.getElementById("inputMinutes") as HTMLInputElement;
+  const inputSeconds = document.getElementById("inputSeconds") as HTMLInputElement;
+  const timerDisplay = document.getElementById("timerDisplay") as HTMLDivElement;
   const mainBtn = document.getElementById("mainBtn") as HTMLButtonElement;
   const resetBtn = document.getElementById("resetBtn") as HTMLButtonElement;
   const playIcon = mainBtn.querySelector(".play-icon") as SVGElement;
@@ -285,6 +373,7 @@ export interface Props {
 
   function startTimer() {
     if (remainingSeconds <= 0) return;
+    exitEditMode();
     isRunning = true;
     timerContainer.classList.add("running");
     playIcon.style.display = "none";
@@ -315,18 +404,138 @@ export interface Props {
     ringProgress.style.strokeDashoffset = "0";
   }
 
-  function setSession(type: string, duration: number) {
-    stopTimer();
-    currentSessionType = type;
-    totalSeconds = duration;
-    remainingSeconds = duration;
-    updateDisplay();
-    ringProgress.style.strokeDashoffset = "0";
-    updateRingColor();
+  // ── Edit mode (custom time input) ──
+  let isEditing = false;
 
+  function enterEditMode() {
+    if (isRunning) return;
+    isEditing = true;
+    timerReadonly.style.display = "none";
+    timerEdit.style.display = "";
+    const m = Math.floor(remainingSeconds / 60);
+    const s = remainingSeconds % 60;
+    inputMinutes.value = String(m).padStart(2, "0");
+    inputSeconds.value = String(s).padStart(2, "0");
+    inputMinutes.focus();
+    inputMinutes.select();
+    setSessionTab("custom");
+  }
+
+  function exitEditMode() {
+    if (!isEditing) return;
+    isEditing = false;
+    parseAndApplyCustomTime();
+    timerReadonly.style.display = "";
+    timerEdit.style.display = "none";
+    updateDisplay();
+  }
+
+  function parseAndApplyCustomTime() {
+    let mins = parseInt(inputMinutes.value, 10) || 0;
+    let secs = parseInt(inputSeconds.value, 10) || 0;
+
+    // Clamp
+    mins = Math.max(0, Math.min(999, mins));
+    secs = Math.max(0, Math.min(59, secs));
+
+    const total = mins * 60 + secs;
+    if (total > 0) {
+      totalSeconds = total;
+      remainingSeconds = total;
+      ringProgress.style.strokeDashoffset = "0";
+    }
+  }
+
+  function setSessionTab(type: string) {
+    currentSessionType = type;
+    updateRingColor();
     sessionBtns.forEach((btn) => {
       btn.classList.toggle("active", btn.dataset.type === type);
     });
+  }
+
+  // ── Input handling ──
+  inputMinutes.addEventListener("input", () => {
+    let val = inputMinutes.value.replace(/\D/g, "");
+    if (val.length > 3) val = val.slice(0, 3);
+    inputMinutes.value = val;
+    // Auto-advance to seconds after 3 digits
+    if (val.length === 3) {
+      inputSeconds.focus();
+      inputSeconds.select();
+    }
+  });
+
+  inputMinutes.addEventListener("keydown", (e) => {
+    if (e.key === ":" || e.key === "ArrowRight") {
+      e.preventDefault();
+      inputSeconds.focus();
+      inputSeconds.select();
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      exitEditMode();
+    }
+  });
+
+  inputSeconds.addEventListener("input", () => {
+    let val = inputSeconds.value.replace(/\D/g, "");
+    if (val.length > 2) val = val.slice(0, 2);
+    inputSeconds.value = val;
+  });
+
+  inputSeconds.addEventListener("keydown", (e) => {
+    if (e.key === "ArrowLeft" && inputSeconds.selectionStart === 0) {
+      e.preventDefault();
+      inputMinutes.focus();
+    }
+    if (e.key === "Enter") {
+      e.preventDefault();
+      exitEditMode();
+    }
+  });
+
+  // Commit on blur
+  inputMinutes.addEventListener("blur", () => {
+    // Small delay so a click on another input registers first
+    setTimeout(() => {
+      if (document.activeElement !== inputSeconds) {
+        exitEditMode();
+      }
+    }, 100);
+  });
+
+  inputSeconds.addEventListener("blur", () => {
+    setTimeout(() => {
+      if (document.activeElement !== inputMinutes) {
+        exitEditMode();
+      }
+    }, 100);
+  });
+
+  // ── Click timer display to edit when stopped ──
+  timerDisplay.addEventListener("click", (e) => {
+    if (isRunning) return;
+    if (isEditing) return;
+    // Don't trigger if clicking on an input
+    if (e.target === inputMinutes || e.target === inputSeconds) return;
+    enterEditMode();
+  });
+
+  // ── Session buttons ──
+  function setSession(type: string, duration: number) {
+    stopTimer();
+    exitEditMode();
+    setSessionTab(type);
+    if (type === "custom") {
+      // Keep current time for custom, enter edit mode
+      enterEditMode();
+    } else {
+      totalSeconds = duration;
+      remainingSeconds = duration;
+      updateDisplay();
+      ringProgress.style.strokeDashoffset = "0";
+    }
   }
 
   // ── Event Listeners ──
@@ -334,6 +543,7 @@ export interface Props {
     if (isRunning) {
       stopTimer();
     } else {
+      exitEditMode();
       startTimer();
     }
   });
