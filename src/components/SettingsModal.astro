@@ -1,0 +1,363 @@
+---
+// SettingsModal.astro — modal to configure default preset durations
+---
+
+<div class="settings-overlay" id="settingsOverlay" aria-hidden="true">
+  <div class="settings-modal" role="dialog" aria-modal="true" aria-labelledby="settingsTitle">
+    <div class="settings-header">
+      <h2 id="settingsTitle">Timer Presets</h2>
+      <button class="settings-close" id="settingsClose" aria-label="Close settings">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+          <line x1="18" y1="6" x2="6" y2="18" />
+          <line x1="6" y1="6" x2="18" y2="18" />
+        </svg>
+      </button>
+    </div>
+
+    <div class="settings-body">
+      <div class="setting-row">
+        <label class="setting-label" for="settingFocus">
+          <span class="setting-icon focus-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" /></svg>
+          </span>
+          Focus
+        </label>
+        <div class="setting-input-wrap">
+          <input
+            class="setting-input"
+            id="settingFocus"
+            type="number"
+            min="1"
+            max="120"
+            value="25"
+            autocomplete="off"
+          />
+          <span class="setting-unit">min</span>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <label class="setting-label" for="settingShortBreak">
+          <span class="setting-icon short-break-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" /></svg>
+          </span>
+          Short Break
+        </label>
+        <div class="setting-input-wrap">
+          <input
+            class="setting-input"
+            id="settingShortBreak"
+            type="number"
+            min="1"
+            max="60"
+            value="5"
+            autocomplete="off"
+          />
+          <span class="setting-unit">min</span>
+        </div>
+      </div>
+
+      <div class="setting-row">
+        <label class="setting-label" for="settingLongBreak">
+          <span class="setting-icon long-break-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="10" /></svg>
+          </span>
+          Long Break
+        </label>
+        <div class="setting-input-wrap">
+          <input
+            class="setting-input"
+            id="settingLongBreak"
+            type="number"
+            min="1"
+            max="120"
+            value="15"
+            autocomplete="off"
+          />
+          <span class="setting-unit">min</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="settings-footer">
+      <button class="settings-btn settings-btn-secondary" id="settingsCancel">Cancel</button>
+      <button class="settings-btn settings-btn-primary" id="settingsSave">Save</button>
+    </div>
+  </div>
+</div>
+
+<style>
+  .settings-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition);
+  }
+
+  .settings-overlay.open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .settings-modal {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-md);
+    padding: 1.5rem;
+    width: 90%;
+    max-width: 360px;
+    transform: translateY(12px) scale(0.97);
+    transition: transform var(--transition);
+  }
+
+  .settings-overlay.open .settings-modal {
+    transform: translateY(0) scale(1);
+  }
+
+  .settings-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 1.25rem;
+  }
+
+  .settings-header h2 {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--color-text);
+  }
+
+  .settings-close {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    color: var(--color-text-muted);
+    transition: all var(--transition);
+  }
+
+  .settings-close:hover {
+    background: var(--color-btn-hover);
+    color: var(--color-text);
+  }
+
+  .settings-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .setting-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+  }
+
+  .setting-label {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text);
+  }
+
+  .setting-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .focus-icon {
+    color: var(--color-accent);
+  }
+
+  .short-break-icon {
+    color: var(--color-accent-short-break);
+  }
+
+  .long-break-icon {
+    color: var(--color-accent-long-break);
+  }
+
+  .setting-input-wrap {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  .setting-input {
+    font-family: inherit;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--color-text);
+    background: var(--color-bg);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    padding: 0.4rem 0.5rem;
+    width: 4.5ch;
+    text-align: center;
+    transition: border-color var(--transition);
+    -moz-appearance: textfield;
+  }
+
+  .setting-input::-webkit-inner-spin-button,
+  .setting-input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+  }
+
+  .setting-input:focus {
+    outline: none;
+    border-color: var(--color-accent);
+    box-shadow: 0 0 0 3px var(--color-accent-soft);
+  }
+
+  .setting-unit {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    flex-shrink: 0;
+  }
+
+  .settings-footer {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.5rem;
+    margin-top: 1.5rem;
+  }
+
+  .settings-btn {
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-sm);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    transition: all var(--transition);
+  }
+
+  .settings-btn-secondary {
+    color: var(--color-text-muted);
+    background: transparent;
+  }
+
+  .settings-btn-secondary:hover {
+    color: var(--color-text);
+    background: var(--color-btn-hover);
+  }
+
+  .settings-btn-primary {
+    background: var(--color-accent);
+    color: #fff;
+    box-shadow: 0 2px 8px rgba(231, 76, 60, 0.3);
+  }
+
+  .settings-btn-primary:hover {
+    box-shadow: 0 4px 14px rgba(231, 76, 60, 0.45);
+    transform: translateY(-1px);
+  }
+</style>
+
+<script>
+  const STORAGE_KEY = "pomodoro-presets";
+  const DEFAULTS = { focus: 25, shortBreak: 5, longBreak: 15 };
+
+  function loadPresets(): { focus: number; shortBreak: number; longBreak: number } {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          focus: typeof parsed.focus === "number" ? parsed.focus : DEFAULTS.focus,
+          shortBreak: typeof parsed.shortBreak === "number" ? parsed.shortBreak : DEFAULTS.shortBreak,
+          longBreak: typeof parsed.longBreak === "number" ? parsed.longBreak : DEFAULTS.longBreak,
+        };
+      }
+    } catch {}
+    return { ...DEFAULTS };
+  }
+
+  function savePresets(presets: { focus: number; shortBreak: number; longBreak: number }) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(presets));
+    // Dispatch event so PomodoroTimer can pick up changes
+    window.dispatchEvent(new CustomEvent("presets-changed", { detail: presets }));
+  }
+
+  const overlay = document.getElementById("settingsOverlay") as HTMLDivElement;
+  const modal = overlay.querySelector(".settings-modal") as HTMLDivElement;
+  const closeBtn = document.getElementById("settingsClose") as HTMLButtonElement;
+  const cancelBtn = document.getElementById("settingsCancel") as HTMLButtonElement;
+  const saveBtn = document.getElementById("settingsSave") as HTMLButtonElement;
+  const focusInput = document.getElementById("settingFocus") as HTMLInputElement;
+  const shortBreakInput = document.getElementById("settingShortBreak") as HTMLInputElement;
+  const longBreakInput = document.getElementById("settingLongBreak") as HTMLInputElement;
+
+  function open() {
+    const presets = loadPresets();
+    focusInput.value = String(presets.focus);
+    shortBreakInput.value = String(presets.shortBreak);
+    longBreakInput.value = String(presets.longBreak);
+    overlay.classList.add("open");
+    overlay.setAttribute("aria-hidden", "false");
+    focusInput.focus();
+    focusInput.select();
+  }
+
+  function close() {
+    overlay.classList.remove("open");
+    overlay.setAttribute("aria-hidden", "true");
+    // Return focus to the settings button
+    (document.getElementById("settingsBtnTop") as HTMLButtonElement)?.focus();
+  }
+
+  function save() {
+    const focus = Math.max(1, Math.min(120, parseInt(focusInput.value, 10) || DEFAULTS.focus));
+    const shortBreak = Math.max(1, Math.min(60, parseInt(shortBreakInput.value, 10) || DEFAULTS.shortBreak));
+    const longBreak = Math.max(1, Math.min(120, parseInt(longBreakInput.value, 10) || DEFAULTS.longBreak));
+
+    savePresets({ focus, shortBreak, longBreak });
+    close();
+  }
+
+  // Expose open/close globally
+  (window as any).__openSettings = open;
+  (window as any).__closeSettings = close;
+
+  // Close buttons
+  closeBtn.addEventListener("click", close);
+  cancelBtn.addEventListener("click", close);
+
+  // Save
+  saveBtn.addEventListener("click", save);
+
+  // Close on overlay click
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) close();
+  });
+
+  // Close on Escape
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && overlay.classList.contains("open")) {
+      close();
+    }
+  });
+
+  // Save on Enter in any input
+  [focusInput, shortBreakInput, longBreakInput].forEach((input) => {
+    input.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") save();
+    });
+  });
+</script>

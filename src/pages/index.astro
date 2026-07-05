@@ -1,18 +1,59 @@
 ---
 import PomodoroTimer from "../components/PomodoroTimer.astro";
+import SettingsModal from "../components/SettingsModal.astro";
 import ThemeToggle from "../components/ThemeToggle.astro";
 import BaseLayout from "../layouts/BaseLayout.astro";
 ---
 
 <BaseLayout>
-  <ThemeToggle />
+  <div class="nav-top">
+    <ThemeToggle />
+    <button class="settings-btn-top" id="settingsBtnTop" aria-label="Timer settings" title="Timer settings">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3" />
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+      </svg>
+    </button>
+  </div>
 
   <main class="main">
     <PomodoroTimer />
   </main>
+
+  <SettingsModal />
 </BaseLayout>
 
 <style>
+  .nav-top {
+    position: fixed;
+    top: 1.25rem;
+    right: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    z-index: 100;
+  }
+
+  .settings-btn-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
+    transition: all var(--transition);
+    color: var(--color-text-muted);
+  }
+
+  .settings-btn-top:hover {
+    background: var(--color-btn-hover);
+    color: var(--color-text);
+    transform: scale(1.05);
+  }
+
   .main {
     display: flex;
     flex-direction: column;
@@ -22,5 +63,10 @@ import BaseLayout from "../layouts/BaseLayout.astro";
     max-width: 480px;
     width: 100%;
   }
-
 </style>
+
+<script>
+  document.getElementById("settingsBtnTop")!.addEventListener("click", () => {
+    (window as any).__openSettings();
+  });
+</script>

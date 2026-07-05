@@ -345,11 +345,47 @@ export interface Props {
   const sessionBtns = document.querySelectorAll<HTMLButtonElement>(".session-btn");
   const timerContainer = document.querySelector(".timer-container") as HTMLDivElement;
 
-  let totalSeconds = 1500; // 25 min default
-  let remainingSeconds = 1500;
+  // ── Presets from localStorage ──
+  const PRESETS_KEY = "pomodoro-presets";
+  const DEFAULT_PRESETS = { focus: 25, shortBreak: 5, longBreak: 15 };
+
+  function loadPresets(): { focus: number; shortBreak: number; longBreak: number } {
+    try {
+      const raw = localStorage.getItem(PRESETS_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        return {
+          focus: typeof parsed.focus === "number" ? parsed.focus : DEFAULT_PRESETS.focus,
+          shortBreak: typeof parsed.shortBreak === "number" ? parsed.shortBreak : DEFAULT_PRESETS.shortBreak,
+          longBreak: typeof parsed.longBreak === "number" ? parsed.longBreak : DEFAULT_PRESETS.longBreak,
+        };
+      }
+    } catch {}
+    return { ...DEFAULT_PRESETS };
+  }
+
+  function updateSessionButtonDurations() {
+    const presets = loadPresets();
+    sessionBtns.forEach((btn) => {
+      if (btn.dataset.type === "focus") {
+        btn.dataset.duration = String(presets.focus * 60);
+      } else if (btn.dataset.type === "short-break") {
+        btn.dataset.duration = String(presets.shortBreak * 60);
+      } else if (btn.dataset.type === "long-break") {
+        btn.dataset.duration = String(presets.longBreak * 60);
+      }
+    });
+  }
+
+  // Initial preset load
+  const presets = loadPresets();
+  let totalSeconds = presets.focus * 60;
+  let remainingSeconds = presets.focus * 60;
   let isRunning = false;
   let intervalId: ReturnType<typeof setInterval> | null = null;
   let currentSessionType = "focus";
+
+  updateSessionButtonDurations();
 
   function updateResetVisibility() {
     resetBtn.classList.toggle("visible", remainingSeconds !== totalSeconds && remainingSeconds > 0);
@@ -659,6 +695,26 @@ export interface Props {
       const duration = parseInt(btn.dataset.duration!, 10);
       setSession(type, duration);
     });
+  });
+
+  // ── Listen for preset changes from settings modal ──
+  window.addEventListener("presets-changed", () => {
+    updateSessionButtonDurations();
+    const presets = loadPresets();
+    // Update current session if it matches a preset type
+    if (!isRunning && currentSessionType !== "custom") {
+      if (currentSessionType === "focus") {
+        totalSeconds = presets.focus * 60;
+        remainingSeconds = presets.focus * 60;
+      } else if (currentSessionType === "short-break") {
+        totalSeconds = presets.shortBreak * 60;
+        remainingSeconds = presets.shortBreak * 60;
+      } else if (currentSessionType === "long-break") {
+        totalSeconds = presets.longBreak * 60;
+        remainingSeconds = presets.longBreak * 60;
+      }
+      updateDisplay();
+    }
   });
 
   // Initial render
